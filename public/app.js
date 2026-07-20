@@ -44,6 +44,65 @@ function esc(value) {
     .replaceAll('"', "&quot;");
 }
 
+function compactPersonKey(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
+function identityValues(row) {
+  return {
+    name: compactPersonKey(row.nev),
+    tax: compactPersonKey(row.adoszam),
+    address: compactPersonKey(row.allando_lakcim),
+  };
+}
+
+function identityCount(values) {
+  return Object.values(values).filter(Boolean).length;
+}
+
+function samePerson(left, right) {
+  const a = identityValues(left);
+  const b = identityValues(right);
+  const same = ["name", "tax", "address"].filter((key) => a[key] && a[key] === b[key]).length;
+  if (same >= 2) return true;
+  return same === 1 && identityCount(a) < 2 && identityCount(b) < 2;
+}
+
+function groupRecordsByPerson(records) {
+  const groups = [];
+  records.forEach((row) => {
+    let group = groups.find((item) => samePerson(item.main, row));
+    if (!group) {
+      group = { main: row, rows: [], liter: 0, hlf: 0, nyugta: 0 };
+      groups.push(group);
+    }
+    group.rows.push(row);
+    group.liter += Number(row.mennyiseg_literben || 0);
+    group.hlf += Number(row.hektoliterfokban || 0);
+    group.nyugta += Number(row.nyugtaertek || 0);
+  });
+  return groups;
+}
+
+function cookingLine(row, index) {
+  const period = [row.fozes_start, row.fozes_end].filter(Boolean).map(esc).join(" - ") || "Nincs főzési dátum";
+  const meter = `${formatNumber(row.kezdo)} / ${formatNumber(row.zaro)}`;
+  return `
+    <div class="entry-line">
+      <strong>${index + 1}.</strong>
+      <span>${period}</span>
+      <span>Kezdő/záró: ${meter}</span>
+      <span>Liter: ${formatNumber(row.mennyiseg_literben)}</span>
+      <span class="${row.hektoliterfokban >= 43 ? "high" : ""}">Hlf: ${formatHlf(row.hektoliterfokban)}</span>
+      <span>Nyugta: ${formatMoney(row.nyugtaertek)}</span>
+    </div>
+  `;
+}
+
 function streetTypeOptions(selected = "") {
   return `<option value="">Válassz</option>` + streetTypes
     .map((type) => `<option ${type === selected ? "selected" : ""}>${esc(type)}</option>`)
@@ -233,24 +292,24 @@ async function loadRecords() {
   const { data } = await api(`/api/records?year=${selectedYear()}&order=${orderSelect.value}`);
   totalHlf.textContent = formatHlf(data.totals.hektoliterfokban);
   totalReceipt.textContent = formatMoney(data.totals.nyugtaertek);
-  recordsBody.innerHTML = data.records.length
-    ? data.records
+  const groups = groupRecordsByPerson(data.records);
+  recordsBody.innerHTML = groups.length
+    ? groups
         .map(
-          (row) => `
+          (group) => `
             <tr>
-              <td>${esc(row.nev)}</td>
-              <td>${esc(row.adoszam)}</td>
-              <td>${esc(row.allando_lakcim)}</td>
-              <td>${esc(row.kozterulet_jellege || "")}</td>
-              <td>${esc(row.fozes_start)} - ${esc(row.fozes_end)}</td>
-              <td>${formatNumber(row.mennyiseg_literben)}</td>
-              <td class="${row.hektoliterfokban >= 43 ? "high" : ""}">${formatHlf(row.hektoliterfokban)}</td>
-              <td>${formatMoney(row.nyugtaertek)}</td>
+              <td>${esc(group.main.nev)}</td>
+              <td>${esc(group.main.adoszam)}</td>
+              <td>${esc(group.main.allando_lakcim)}</td>
+              <td><div class="entry-stack">${group.rows.map(cookingLine).join("")}</div></td>
+              <td>${formatNumber(group.liter)}</td>
+              <td class="${group.hlf >= 43 ? "high" : ""}">${formatHlf(group.hlf)}</td>
+              <td>${formatMoney(group.nyugta)}</td>
             </tr>
           `
         )
         .join("")
-    : `<tr><td colspan="8">Nincs még adat ebben az évben.</td></tr>`;
+    : `<tr><td colspan="7">Nincs még adat ebben az évben.</td></tr>`;
 }
 
 async function loadPeople() {

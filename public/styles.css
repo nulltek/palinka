@@ -248,6 +248,23 @@ th {
   top: 0;
 }
 
+.entry-stack {
+  display: grid;
+  gap: 8px;
+  min-width: 520px;
+}
+
+.entry-line {
+  display: grid;
+  grid-template-columns: 34px minmax(150px, 1.4fr) minmax(120px, 1fr) minmax(90px, 0.8fr) minmax(90px, 0.8fr) minmax(120px, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 9px 10px;
+  border: 1px solid #eadfce;
+  border-radius: 6px;
+  background: #fffaf2;
+}
+
 .high {
   color: var(--red);
   font-weight: 900;
