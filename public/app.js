@@ -12,6 +12,7 @@ const totalReceipt = document.querySelector("#totalReceipt");
 const personSelect = document.querySelector("#personSelect");
 const entrySelect = document.querySelector("#entrySelect");
 const orderSelect = document.querySelector("#orderSelect");
+const pdfButton = document.querySelector("#pdfButton");
 const editArea = document.querySelector("#editArea");
 const toast = document.querySelector("#toast");
 const warningDialog = document.querySelector("#warningDialog");
@@ -481,6 +482,9 @@ yearSelect.addEventListener("change", refreshAll);
 personSelect.addEventListener("change", loadPersonRecords);
 entrySelect.addEventListener("change", showSelectedEntry);
 orderSelect.addEventListener("change", loadRecords);
+pdfButton.addEventListener("click", () => {
+  window.open(`/api/export.pdf?year=${selectedYear()}&order=${orderSelect.value}`, "_blank");
+});
 entryForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   await saveNew();

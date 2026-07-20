@@ -73,13 +73,16 @@
       <section id="viewPanel" class="panel">
         <div class="panel-head">
           <h2>Meglévő adatok</h2>
-          <label class="order-box">Sorrend
-            <select id="orderSelect">
-              <option value="name">Név szerint</option>
-              <option value="azonosito">Azonosítószám szerint</option>
-              <option value="kiadas" selected>Kiadás dátuma szerint</option>
-            </select>
-          </label>
+          <div class="view-actions">
+            <label class="order-box">Sorrend
+              <select id="orderSelect">
+                <option value="name">Név szerint</option>
+                <option value="azonosito">Azonosítószám szerint</option>
+                <option value="kiadas" selected>Kiadás dátuma szerint</option>
+              </select>
+            </label>
+            <button type="button" class="secondary" id="pdfButton">PDF letöltése</button>
+          </div>
         </div>
         <div class="table-wrap">
           <table>

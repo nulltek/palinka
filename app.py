@@ -1,4 +1,5 @@
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from io import BytesIO
 import os
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
@@ -15,6 +16,18 @@ try:
 except ImportError:
     psycopg = None
     dict_row = None
+
+try:
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_CENTER
+    from reportlab.lib.pagesizes import A3, landscape
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.units import mm
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+except ImportError:
+    colors = None
 
 
 ROOT = Path(__file__).resolve().parent
@@ -50,6 +63,31 @@ FIELDS = [
     "hektoliterfokban",
     "kiadas_datuma",
     "nyugtaertek",
+]
+
+EXPORT_COLUMNS = [
+    ("Név", "nev"),
+    ("Azonosító szám", "azonosito_szam"),
+    ("Adószám", "adoszam"),
+    ("Állandó lakcím", "allando_lakcim"),
+    ("Irányítószám", "iranyitoszam"),
+    ("Megye", "megye"),
+    ("Város", "varos"),
+    ("Közterület neve", "kozterulet_neve"),
+    ("Közterület jellege", "kozterulet_jellege"),
+    ("Közterület száma", "kozterulet_szama"),
+    ("Emelet", "emelet"),
+    ("Ajtószám", "ajtoszam"),
+    ("Cefre átvételi azonosító", "cefre_atveteli_azonosito"),
+    ("Főzés kezdete", "fozes_start"),
+    ("Főzés vége", "fozes_end"),
+    ("Kezdő", "kezdo"),
+    ("Záró", "zaro"),
+    ("Szesz foka", "szesz_foka"),
+    ("Mennyiség literben", "mennyiseg_literben"),
+    ("Hektoliterfokban", "hektoliterfokban"),
+    ("Kiadás dátuma", "kiadas_datuma"),
+    ("Nyugtaérték", "nyugtaertek"),
 ]
 
 
@@ -384,6 +422,97 @@ def known_years():
     return years
 
 
+def register_pdf_font():
+    font_candidates = [
+        ROOT / "DejaVuSans.ttf",
+        Path("C:/Windows/Fonts/arial.ttf"),
+        Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+        Path("/usr/share/fonts/dejavu/DejaVuSans.ttf"),
+    ]
+    for path in font_candidates:
+        if path.exists():
+            try:
+                pdfmetrics.registerFont(TTFont("ReportFont", str(path)))
+                return "ReportFont"
+            except Exception:
+                pass
+    return "Helvetica"
+
+
+def pdf_value(row, field):
+    value = row.get(field, "")
+    if value is None:
+        return ""
+    if hasattr(value, "isoformat"):
+        return value.isoformat(sep=" ", timespec="seconds")
+    if field in {"kezdo", "zaro", "szesz_foka", "mennyiseg_literben"}:
+        return f"{float(value or 0):.3f}".rstrip("0").rstrip(".")
+    if field == "hektoliterfokban":
+        return f"{float(value or 0):.1f}"
+    if field == "nyugtaertek":
+        return f"{float(value or 0):.0f} Ft"
+    return str(value)
+
+
+def build_pdf(year, rows, total):
+    if colors is None:
+        raise RuntimeError("PDF készítő csomag hiányzik. Telepítsd a requirements.txt fájlt.")
+    font = register_pdf_font()
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(A3),
+        leftMargin=8 * mm,
+        rightMargin=8 * mm,
+        topMargin=8 * mm,
+        bottomMargin=8 * mm,
+        title=f"Pálinka nyilvántartás {year}",
+    )
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        "ExportTitle",
+        parent=styles["Title"],
+        fontName=font,
+        fontSize=15,
+        leading=18,
+        alignment=TA_CENTER,
+    )
+    small = ParagraphStyle("ExportCell", fontName=font, fontSize=5.3, leading=6.4)
+    header = ParagraphStyle("ExportHeader", parent=small, fontName=font, fontSize=5.5, leading=6.6, alignment=TA_CENTER)
+    data = [[Paragraph(label, header) for label, _ in EXPORT_COLUMNS]]
+    for row in rows:
+        data.append([Paragraph(pdf_value(row, field).replace("\n", " "), small) for _, field in EXPORT_COLUMNS])
+    col_widths = [22, 20, 20, 35, 13, 20, 20, 20, 16, 14, 12, 12, 22, 22, 22, 13, 13, 13, 18, 16, 18, 18]
+    table = Table(data, colWidths=[width * mm for width in col_widths], repeatRows=1)
+    table.setStyle(
+        TableStyle(
+            [
+                ("FONTNAME", (0, 0), (-1, -1), font),
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#31271e")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#6f5a44")),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 2),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+                ("TOPPADDING", (0, 0), (-1, -1), 2),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#fffaf2")]),
+            ]
+        )
+    )
+    story = [
+        Paragraph(f"Pálinka ügyfél nyilvántartás - {year}", title_style),
+        Paragraph(
+            f"Bejegyzések száma: {len(rows)} | Összes hektoliterfok: {total['hektoliterfokban']:.1f} | Összes nyugtaérték: {total['nyugtaertek']:.0f} Ft",
+            small,
+        ),
+        Spacer(1, 4 * mm),
+        table,
+    ]
+    doc.build(story)
+    return buffer.getvalue()
+
+
 class Handler(BaseHTTPRequestHandler):
     def is_logged_in(self):
         cookie = self.headers.get("Cookie", "")
@@ -402,6 +531,15 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(encoded)))
         self.end_headers()
         self.wfile.write(encoded)
+
+    def send_pdf(self, body, filename):
+        self.send_response(200)
+        self.send_header("Content-Type", "application/pdf")
+        self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
     def read_json(self):
         length = int(self.headers.get("Content-Length", 0))
@@ -455,6 +593,13 @@ class Handler(BaseHTTPRequestHandler):
                 body = {"records": [row_to_dict(row) for row in rows], "totals": totals(conn, table)}
                 conn.close()
                 return self.send_json(200, body)
+            if parsed.path == "/api/export.pdf":
+                order = query.get("order", ["kiadas"])[0]
+                rows = run(conn, f"SELECT * FROM {table} ORDER BY fozes_start DESC, id DESC").fetchall()
+                rows = [row_to_dict(row) for row in sorted_rows(rows, order)]
+                pdf = build_pdf(year, rows, totals(conn, table))
+                conn.close()
+                return self.send_pdf(pdf, f"palinka_{year}.pdf")
             if parsed.path == "/api/people":
                 rows = run(conn, f"SELECT DISTINCT nev FROM {table} ORDER BY nev").fetchall()
                 body = {"people": [row["nev"] for row in rows]}
