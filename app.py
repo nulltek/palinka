@@ -7,6 +7,14 @@ import re
 import secrets
 import sqlite3
 import unicodedata
+from urllib.parse import urlparse as parse_db_url
+
+try:
+    import psycopg
+    from psycopg.rows import dict_row
+except ImportError:
+    psycopg = None
+    dict_row = None
 
 
 ROOT = Path(__file__).resolve().parent
@@ -15,6 +23,8 @@ DATA = ROOT / "data"
 DATA.mkdir(exist_ok=True)
 PASSWORD = "1961"
 SESSION_TOKEN = secrets.token_urlsafe(32)
+DATABASE_URL = os.environ.get("DATABASE_URL")
+USE_POSTGRES = bool(DATABASE_URL)
 
 
 FIELDS = [
@@ -65,11 +75,55 @@ def table_name(year):
     return f"clients_{year}"
 
 
+def run(conn, sql, params=None):
+    if USE_POSTGRES:
+        sql = sql.replace("?", "%s")
+    return conn.execute(sql, params or [])
+
+
 def connect_year(year):
     year = clean_year(year)
+    table = table_name(year)
+    if USE_POSTGRES:
+        if psycopg is None:
+            raise RuntimeError("PostgreSQL driver missing. Install requirements.txt.")
+        conn = psycopg.connect(DATABASE_URL, row_factory=dict_row)
+        conn.execute(
+            f"""
+            CREATE TABLE IF NOT EXISTS {table} (
+                id SERIAL PRIMARY KEY,
+                nev TEXT NOT NULL DEFAULT '',
+                azonosito_szam TEXT NOT NULL DEFAULT '',
+                adoszam TEXT NOT NULL DEFAULT '',
+                allando_lakcim TEXT NOT NULL DEFAULT '',
+                iranyitoszam TEXT NOT NULL DEFAULT '',
+                megye TEXT NOT NULL DEFAULT '',
+                varos TEXT NOT NULL DEFAULT '',
+                kozterulet_neve TEXT NOT NULL DEFAULT '',
+                kozterulet_jellege TEXT NOT NULL DEFAULT '',
+                kozterulet_szama TEXT NOT NULL DEFAULT '',
+                emelet TEXT NOT NULL DEFAULT '',
+                ajtoszam TEXT NOT NULL DEFAULT '',
+                cefre_atveteli_azonosito TEXT NOT NULL DEFAULT '',
+                fozes_start TEXT NOT NULL DEFAULT '',
+                fozes_end TEXT NOT NULL DEFAULT '',
+                kezdo DOUBLE PRECISION NOT NULL DEFAULT 0,
+                zaro DOUBLE PRECISION NOT NULL DEFAULT 0,
+                szesz_foka DOUBLE PRECISION NOT NULL DEFAULT 0,
+                mennyiseg_literben DOUBLE PRECISION NOT NULL DEFAULT 0,
+                hektoliterfokban DOUBLE PRECISION NOT NULL DEFAULT 0,
+                kiadas_datuma TEXT NOT NULL DEFAULT '',
+                nyugtaertek DOUBLE PRECISION NOT NULL DEFAULT 0,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        conn.commit()
+        return conn, table
+
     conn = sqlite3.connect(db_path(year))
     conn.row_factory = sqlite3.Row
-    table = table_name(year)
     conn.execute(
         f"""
         CREATE TABLE IF NOT EXISTS {table} (
@@ -120,6 +174,8 @@ def connect_year(year):
 
 
 def row_to_dict(row):
+    if isinstance(row, dict):
+        return dict(row)
     return {key: row[key] for key in row.keys()}
 
 
@@ -240,7 +296,7 @@ def warnings_for(conn, table, data, current_id=None):
     if current_id:
         where = "WHERE id != ?"
         params.append(current_id)
-    rows = conn.execute(f"SELECT * FROM {table} {where}", params).fetchall()
+    rows = run(conn, f"SELECT * FROM {table} {where}", params).fetchall()
     matches = []
     for row in rows:
         same = []
@@ -274,7 +330,8 @@ def warnings_for(conn, table, data, current_id=None):
 
 
 def totals(conn, table):
-    row = conn.execute(
+    row = run(
+        conn,
         f"SELECT COALESCE(SUM(hektoliterfokban), 0) AS hektoliter, COALESCE(SUM(nyugtaertek), 0) AS nyugta FROM {table}"
     ).fetchone()
     return {"hektoliterfokban": round(row["hektoliter"], 1), "nyugtaertek": round(row["nyugta"], 0)}
@@ -296,6 +353,24 @@ def sorted_rows(rows, order):
 
 
 def known_years():
+    if USE_POSTGRES:
+        if psycopg is None:
+            return [2026]
+        try:
+            conn = psycopg.connect(DATABASE_URL, row_factory=dict_row)
+            rows = conn.execute(
+                "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public' AND tablename LIKE 'clients_%'"
+            ).fetchall()
+            conn.close()
+            found = []
+            for row in rows:
+                match = re.match(r"clients_(\d{4})$", row["tablename"])
+                if match:
+                    found.append(int(match.group(1)))
+            current = 2026
+            return sorted(set(found + [current]), reverse=True)
+        except Exception:
+            return [2026]
     found = []
     for file in DATA.glob("palinka_*.db"):
         match = re.match(r"palinka_(\d{4})\.db", file.name)
@@ -372,19 +447,19 @@ class Handler(BaseHTTPRequestHandler):
             conn, table = connect_year(year)
             if parsed.path == "/api/records":
                 order = query.get("order", ["kiadas"])[0]
-                rows = conn.execute(f"SELECT * FROM {table} ORDER BY fozes_start DESC, id DESC").fetchall()
+                rows = run(conn, f"SELECT * FROM {table} ORDER BY fozes_start DESC, id DESC").fetchall()
                 rows = sorted_rows(rows, order)
                 body = {"records": [row_to_dict(row) for row in rows], "totals": totals(conn, table)}
                 conn.close()
                 return self.send_json(200, body)
             if parsed.path == "/api/people":
-                rows = conn.execute(f"SELECT DISTINCT nev FROM {table} ORDER BY nev COLLATE NOCASE").fetchall()
+                rows = run(conn, f"SELECT DISTINCT nev FROM {table} ORDER BY nev").fetchall()
                 body = {"people": [row["nev"] for row in rows]}
                 conn.close()
                 return self.send_json(200, body)
             if parsed.path == "/api/person":
                 name = query.get("nev", [""])[0]
-                rows = conn.execute(f"SELECT * FROM {table} WHERE nev = ? ORDER BY fozes_start DESC, id DESC", [name]).fetchall()
+                rows = run(conn, f"SELECT * FROM {table} WHERE nev = ? ORDER BY fozes_start DESC, id DESC", [name]).fetchall()
                 body = {"records": [row_to_dict(row) for row in rows], "totals": totals(conn, table)}
                 conn.close()
                 return self.send_json(200, body)
@@ -425,7 +500,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_json(409, {"warnings": warnings, "calculated": data})
             placeholders = ", ".join(["?"] * len(FIELDS))
             columns = ", ".join(FIELDS)
-            conn.execute(f"INSERT INTO {table} ({columns}) VALUES ({placeholders})", [data[field] for field in FIELDS])
+            run(conn, f"INSERT INTO {table} ({columns}) VALUES ({placeholders})", [data[field] for field in FIELDS])
             conn.commit()
             body = {"ok": True, "totals": totals(conn, table)}
             conn.close()
@@ -453,7 +528,8 @@ class Handler(BaseHTTPRequestHandler):
                 conn.close()
                 return self.send_json(409, {"warnings": warnings, "calculated": data})
             assignments = ", ".join([f"{field} = ?" for field in FIELDS])
-            conn.execute(
+            run(
+                conn,
                 f"UPDATE {table} SET {assignments}, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
                 [data[field] for field in FIELDS] + [record_id],
             )
@@ -477,7 +553,7 @@ class Handler(BaseHTTPRequestHandler):
             query = parse_qs(parsed.query)
             year = clean_year(query.get("year", [None])[0])
             conn, table = connect_year(year)
-            conn.execute(f"DELETE FROM {table} WHERE id = ?", [record_id])
+            run(conn, f"DELETE FROM {table} WHERE id = ?", [record_id])
             conn.commit()
             body = {"ok": True, "totals": totals(conn, table)}
             conn.close()
