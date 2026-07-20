@@ -1,100 +1,100 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="hu">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Pálinka Ügyfél Nyilvántartó</title>
+    <title>PĂˇlinka ĂśgyfĂ©l NyilvĂˇntartĂł</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <main class="shell">
       <header class="topbar">
         <div>
-          <p class="eyebrow">Pálinkafőzde adatbázis</p>
-          <h1>Ügyfelek és főzések</h1>
+          <p class="eyebrow">PĂˇlinkafĹ‘zde adatbĂˇzis</p>
+          <h1>Ăśgyfelek Ă©s fĹ‘zĂ©sek</h1>
         </div>
         <div class="year-box">
-          <label for="yearSelect">Év</label>
+          <label for="yearSelect">Ă‰v</label>
           <select id="yearSelect"></select>
         </div>
       </header>
 
-      <nav class="tabs" aria-label="Fő menü">
-        <button class="tab active" data-tab="new">Új adat felvitele</button>
-        <button class="tab" data-tab="view">Meglévő adatok</button>
-        <button class="tab" data-tab="edit">Szerkesztés</button>
+      <nav class="tabs" aria-label="FĹ‘ menĂĽ">
+        <button class="tab active" data-tab="new">Ăšj adat felvitele</button>
+        <button class="tab" data-tab="view">MeglĂ©vĹ‘ adatok</button>
+        <button class="tab" data-tab="edit">SzerkesztĂ©s</button>
       </nav>
 
       <section class="summary-grid">
         <div class="summary-card">
-          <span>Összes hektoliterfok</span>
+          <span>Ă–sszes hektoliterfok</span>
           <strong id="totalHlf">0</strong>
         </div>
         <div class="summary-card">
-          <span>Összes nyugtaérték</span>
+          <span>Ă–sszes nyugtaĂ©rtĂ©k</span>
           <strong id="totalReceipt">0 Ft</strong>
         </div>
       </section>
 
       <section id="newPanel" class="panel active-panel">
         <div class="panel-head">
-          <h2>Új adat felvitele</h2>
-          <p>A liter, hektoliterfok és nyugtaérték magától számolódik.</p>
+          <h2>Ăšj adat felvitele</h2>
+          <p>A liter, hektoliterfok Ă©s nyugtaĂ©rtĂ©k magĂˇtĂłl szĂˇmolĂłdik.</p>
         </div>
         <form id="entryForm" class="form-grid">
-          <label>Név<input name="nev" required autocomplete="name" /></label>
-          <label>Azonosító szám<input name="azonosito_szam" required /></label>
-          <label>Adószám<input name="adoszam" required /></label>
-          <label>Irányítószám<input name="iranyitoszam" required inputmode="numeric" /></label>
-          <label>Megye<select name="megye" class="county-select" required></select></label>
-          <label>Város<input name="varos" class="city-input" list="cityListNew" required /><datalist id="cityListNew"></datalist></label>
-          <label>Közterület neve<input name="kozterulet_neve" required /></label>
-          <label>Közterület jellege
-            <select name="kozterulet_jellege" required>
-              <option value="">Válassz</option>
+          <label>NĂ©v<input name="nev" autocomplete="name" /></label>
+          <label>AzonosĂ­tĂł szĂˇm<input name="azonosito_szam" /></label>
+          <label>AdĂłszĂˇm<input name="adoszam" /></label>
+          <label>IrĂˇnyĂ­tĂłszĂˇm<input name="iranyitoszam" inputmode="numeric" /></label>
+          <label>Megye<select name="megye" class="county-select"></select></label>
+          <label>VĂˇros<input name="varos" class="city-input" list="cityListNew" /><datalist id="cityListNew"></datalist></label>
+          <label>KĂ¶zterĂĽlet neve<input name="kozterulet_neve" /></label>
+          <label>KĂ¶zterĂĽlet jellege
+            <select name="kozterulet_jellege">
+              <option value="">VĂˇlassz</option>
               <option>utca</option>
-              <option>tér</option>
-              <option>körút</option>
-              <option>út</option>
-              <option>sugárút</option>
-              <option>köz</option>
+              <option>tĂ©r</option>
+              <option>kĂ¶rĂşt</option>
+              <option>Ăşt</option>
+              <option>sugĂˇrĂşt</option>
+              <option>kĂ¶z</option>
               <option>sor</option>
               <option>park</option>
-              <option>lakótelep</option>
-              <option>dűlő</option>
+              <option>lakĂłtelep</option>
+              <option>dĹ±lĹ‘</option>
               <option>tanya</option>
               <option>major</option>
-              <option>egyéb</option>
+              <option>egyĂ©b</option>
             </select>
           </label>
-          <label>Közterület száma<input name="kozterulet_szama" required /></label>
+          <label>KĂ¶zterĂĽlet szĂˇma<input name="kozterulet_szama" /></label>
           <label>Emelet<input name="emelet" /></label>
-          <label>Ajtószám<input name="ajtoszam" /></label>
-          <label>Cefre átvételi azonosító<input name="cefre_atveteli_azonosito" required /></label>
-          <label>Főzés kezdete<input name="fozes_start" type="datetime-local" required /></label>
-          <label>Főzés vége<input name="fozes_end" type="datetime-local" required /></label>
-          <label>Kezdő óraállás<input name="kezdo" type="number" step="0.001" required /></label>
-          <label>Záró óraállás<input name="zaro" type="number" step="0.001" required /></label>
-          <label>Szesz foka<input name="szesz_foka" type="number" step="0.1" required /></label>
-          <label>Mennyiség literben<input name="mennyiseg_literben" readonly /></label>
+          <label>AjtĂłszĂˇm<input name="ajtoszam" /></label>
+          <label>Cefre ĂˇtvĂ©teli azonosĂ­tĂł<input name="cefre_atveteli_azonosito" /></label>
+          <label>FĹ‘zĂ©s kezdete<input name="fozes_start" type="datetime-local" /></label>
+          <label>FĹ‘zĂ©s vĂ©ge<input name="fozes_end" type="datetime-local" /></label>
+          <label>KezdĹ‘ ĂłraĂˇllĂˇs<input name="kezdo" type="number" step="0.001" /></label>
+          <label>ZĂˇrĂł ĂłraĂˇllĂˇs<input name="zaro" type="number" step="0.001" /></label>
+          <label>Szesz foka<input name="szesz_foka" type="number" step="0.1" /></label>
+          <label>MennyisĂ©g literben<input name="mennyiseg_literben" readonly /></label>
           <label>Hektoliterfokban<input name="hektoliterfokban" readonly /></label>
-          <label>Kiadás dátuma<input name="kiadas_datuma" type="date" required /></label>
-          <label>Nyugtaérték<input name="nyugtaertek" readonly /></label>
+          <label>KiadĂˇs dĂˇtuma<input name="kiadas_datuma" type="date" /></label>
+          <label>NyugtaĂ©rtĂ©k<input name="nyugtaertek" readonly /></label>
           <div class="actions wide">
-            <button type="submit" class="primary">Mentés</button>
-            <button type="reset" class="secondary">Űrlap törlése</button>
+            <button type="submit" class="primary">MentĂ©s</button>
+            <button type="reset" class="secondary">Ĺ°rlap tĂ¶rlĂ©se</button>
           </div>
         </form>
       </section>
 
       <section id="viewPanel" class="panel">
         <div class="panel-head">
-          <h2>Meglévő adatok</h2>
+          <h2>MeglĂ©vĹ‘ adatok</h2>
           <label class="order-box">Sorrend
             <select id="orderSelect">
-              <option value="name">Név szerint</option>
-              <option value="azonosito">Azonosítószám szerint</option>
-              <option value="kiadas" selected>Kiadás dátuma szerint</option>
+              <option value="name">NĂ©v szerint</option>
+              <option value="azonosito">AzonosĂ­tĂłszĂˇm szerint</option>
+              <option value="kiadas" selected>KiadĂˇs dĂˇtuma szerint</option>
             </select>
           </label>
         </div>
@@ -102,14 +102,14 @@
           <table>
             <thead>
               <tr>
-                <th>Név</th>
-                <th>Adószám</th>
-                <th>Lakcím</th>
-                <th>Típus</th>
-                <th>Főzés</th>
+                <th>NĂ©v</th>
+                <th>AdĂłszĂˇm</th>
+                <th>LakcĂ­m</th>
+                <th>TĂ­pus</th>
+                <th>FĹ‘zĂ©s</th>
                 <th>Liter</th>
                 <th>Hlf</th>
-                <th>Nyugtaérték</th>
+                <th>NyugtaĂ©rtĂ©k</th>
               </tr>
             </thead>
             <tbody id="recordsBody"></tbody>
@@ -119,12 +119,12 @@
 
       <section id="editPanel" class="panel">
         <div class="panel-head">
-          <h2>Szerkesztés</h2>
-          <p>Válassz évet és személyt, majd javítsd a sort.</p>
+          <h2>SzerkesztĂ©s</h2>
+          <p>VĂˇlassz Ă©vet Ă©s szemĂ©lyt, majd javĂ­tsd a sort.</p>
         </div>
         <div class="edit-picker">
-          <label>Személy<select id="personSelect"></select></label>
-          <label>Bejegyzés<select id="entrySelect"></select></label>
+          <label>SzemĂ©ly<select id="personSelect"></select></label>
+          <label>BejegyzĂ©s<select id="entrySelect"></select></label>
         </div>
         <div id="editArea" class="edit-area"></div>
       </section>
@@ -135,8 +135,8 @@
         <h2>Figyelem</h2>
         <div id="warningText"></div>
         <div class="dialog-actions">
-          <button id="cancelWarning" class="secondary">Mégse</button>
-          <button id="confirmWarning" class="danger">Mentés így is</button>
+          <button id="cancelWarning" class="secondary">MĂ©gse</button>
+          <button id="confirmWarning" class="danger">MentĂ©s Ă­gy is</button>
         </div>
       </div>
     </dialog>
@@ -146,3 +146,4 @@
     <script src="/app.js"></script>
   </body>
 </html>
+

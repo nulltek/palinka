@@ -53,7 +53,7 @@ def clean_year(value):
 def year_from_date(value):
     match = re.match(r"^(\d{4})-\d{2}-\d{2}$", str(value or ""))
     if not match:
-        raise ValueError("Bad kiadás dátuma")
+        return None
     return clean_year(match.group(1))
 
 
@@ -196,15 +196,13 @@ def compute_values(payload):
         "kiadas_datuma",
     ]:
         data[field] = str(data[field]).strip()
-        if not data[field]:
-            raise ValueError(f"Missing: {field}")
     for field in ["allando_lakcim", "emelet", "ajtoszam"]:
         data[field] = str(data.get(field, "")).strip()
     data["allando_lakcim"] = build_address(data)
 
-    kezdo = float(payload.get("kezdo", 0))
-    zaro = float(payload.get("zaro", 0))
-    szesz = float(payload.get("szesz_foka", 0))
+    kezdo = float(payload.get("kezdo") or 0)
+    zaro = float(payload.get("zaro") or 0)
+    szesz = float(payload.get("szesz_foka") or 0)
     if zaro < kezdo:
         raise ValueError("Záró óraállás cannot be smaller than kezdő óraállás.")
     if szesz < 0:
@@ -408,7 +406,7 @@ class Handler(BaseHTTPRequestHandler):
             payload = self.read_json()
             force = bool(payload.get("force"))
             data = compute_values(payload)
-            year = year_from_date(data["kiadas_datuma"])
+            year = year_from_date(data["kiadas_datuma"]) or clean_year(payload.get("year"))
             conn, table = connect_year(year)
             warnings = warnings_for(conn, table, data)
             if warnings and not force:

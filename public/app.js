@@ -1,4 +1,4 @@
-const yearSelect = document.querySelector("#yearSelect");
+﻿const yearSelect = document.querySelector("#yearSelect");
 const tabs = document.querySelectorAll(".tab");
 const panels = {
   new: document.querySelector("#newPanel"),
@@ -21,7 +21,7 @@ const confirmWarning = document.querySelector("#confirmWarning");
 
 let pendingSave = null;
 let currentPersonRecords = [];
-const streetTypes = ["utca", "tér", "körút", "út", "sugárút", "köz", "sor", "park", "lakótelep", "dűlő", "tanya", "major", "egyéb"];
+const streetTypes = ["utca", "tĂ©r", "kĂ¶rĂşt", "Ăşt", "sugĂˇrĂşt", "kĂ¶z", "sor", "park", "lakĂłtelep", "dĹ±lĹ‘", "tanya", "major", "egyĂ©b"];
 const locations = window.HUNGARY_LOCATIONS || {};
 
 function formatMoney(value) {
@@ -45,13 +45,13 @@ function esc(value) {
 }
 
 function streetTypeOptions(selected = "") {
-  return `<option value="">Válassz</option>` + streetTypes
+  return `<option value="">VĂˇlassz</option>` + streetTypes
     .map((type) => `<option ${type === selected ? "selected" : ""}>${esc(type)}</option>`)
     .join("");
 }
 
 function countyOptions(selected = "") {
-  return `<option value="">Válassz</option>` + Object.keys(locations)
+  return `<option value="">VĂˇlassz</option>` + Object.keys(locations)
     .map((county) => `<option ${county === selected ? "selected" : ""}>${esc(county)}</option>`)
     .join("");
 }
@@ -137,7 +137,7 @@ async function api(path, options = {}) {
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok && response.status !== 409) {
-    throw new Error(data.error || "Hiba történt.");
+    throw new Error(data.error || "Hiba tĂ¶rtĂ©nt.");
   }
   return { response, data };
 }
@@ -172,12 +172,12 @@ function showWarnings(warnings, onConfirm) {
   const parts = warnings.map((warning) => {
     if (warning.type === "possible_existing_client") {
       const names = warning.matches
-        .map((match) => `<li>${match.nev}: egyezés: ${match.same.join(", ")}</li>`)
+        .map((match) => `<li>${match.nev}: egyezĂ©s: ${match.same.join(", ")}</li>`)
         .join("");
-      return `<p><strong>Lehet, hogy ez már meglévő ügyfél.</strong></p><ul>${names}</ul><p>Ha ez új főzés ugyanannak vagy mégis helyes adat, menthető.</p>`;
+      return `<p><strong>Lehet, hogy ez mĂˇr meglĂ©vĹ‘ ĂĽgyfĂ©l.</strong></p><ul>${names}</ul><p>Ha ez Ăşj fĹ‘zĂ©s ugyanannak vagy mĂ©gis helyes adat, menthetĹ‘.</p>`;
     }
     if (warning.type === "high_hektoliter") {
-      return `<p><strong>Hektoliterfok: ${formatHlf(warning.value)}</strong></p><p>Ez 43 vagy több, ellenőrizd mentés előtt.</p>`;
+      return `<p><strong>Hektoliterfok: ${formatHlf(warning.value)}</strong></p><p>Ez 43 vagy tĂ¶bb, ellenĹ‘rizd mentĂ©s elĹ‘tt.</p>`;
     }
     return `<p>${warning.message}</p>`;
   });
@@ -226,15 +226,15 @@ async function loadRecords() {
           `
         )
         .join("")
-    : `<tr><td colspan="8">Nincs még adat ebben az évben.</td></tr>`;
+    : `<tr><td colspan="8">Nincs mĂ©g adat ebben az Ă©vben.</td></tr>`;
 }
 
 async function loadPeople() {
   const { data } = await api(`/api/people?year=${selectedYear()}`);
   personSelect.innerHTML = data.people.length
-    ? `<option value="">Válassz személyt</option>` + data.people.map((name) => `<option>${esc(name)}</option>`).join("")
-    : `<option value="">Nincs személy ebben az évben</option>`;
-  entrySelect.innerHTML = `<option value="">Előbb válassz személyt</option>`;
+    ? `<option value="">VĂˇlassz szemĂ©lyt</option>` + data.people.map((name) => `<option>${esc(name)}</option>`).join("")
+    : `<option value="">Nincs szemĂ©ly ebben az Ă©vben</option>`;
+  entrySelect.innerHTML = `<option value="">ElĹ‘bb vĂˇlassz szemĂ©lyt</option>`;
   currentPersonRecords = [];
   editArea.innerHTML = "";
 }
@@ -244,30 +244,30 @@ function editFormHtml(row) {
     <article class="edit-card">
       <h3>${esc(row.nev)} - ${esc(row.fozes_start)}</h3>
       <form class="edit-form" data-id="${row.id}">
-        <label>Név<input name="nev" required value="${esc(row.nev)}"></label>
-        <label>Azonosító szám<input name="azonosito_szam" required value="${esc(row.azonosito_szam)}"></label>
-        <label>Adószám<input name="adoszam" required value="${esc(row.adoszam)}"></label>
-        <label>Irányítószám<input name="iranyitoszam" required inputmode="numeric" value="${esc(row.iranyitoszam || "")}"></label>
-        <label>Megye<select name="megye" class="county-select" required data-selected="${esc(row.megye || "")}">${countyOptions(row.megye || "")}</select></label>
-        <label>Város<input name="varos" class="city-input" list="cityListEdit${row.id}" required value="${esc(row.varos || "")}"><datalist id="cityListEdit${row.id}"></datalist></label>
-        <label>Közterület neve<input name="kozterulet_neve" required value="${esc(row.kozterulet_neve || "")}"></label>
-        <label>Közterület jellege<select name="kozterulet_jellege" required>${streetTypeOptions(row.kozterulet_jellege || "")}</select></label>
-        <label>Közterület száma<input name="kozterulet_szama" required value="${esc(row.kozterulet_szama || "")}"></label>
+        <label>NĂ©v<input name="nev" value="${esc(row.nev)}"></label>
+        <label>AzonosĂ­tĂł szĂˇm<input name="azonosito_szam" value="${esc(row.azonosito_szam)}"></label>
+        <label>AdĂłszĂˇm<input name="adoszam" value="${esc(row.adoszam)}"></label>
+        <label>IrĂˇnyĂ­tĂłszĂˇm<input name="iranyitoszam" inputmode="numeric" value="${esc(row.iranyitoszam || "")}"></label>
+        <label>Megye<select name="megye" class="county-select" data-selected="${esc(row.megye || "")}">${countyOptions(row.megye || "")}</select></label>
+        <label>VĂˇros<input name="varos" class="city-input" list="cityListEdit${row.id}" value="${esc(row.varos || "")}"><datalist id="cityListEdit${row.id}"></datalist></label>
+        <label>KĂ¶zterĂĽlet neve<input name="kozterulet_neve" value="${esc(row.kozterulet_neve || "")}"></label>
+        <label>KĂ¶zterĂĽlet jellege<select name="kozterulet_jellege">${streetTypeOptions(row.kozterulet_jellege || "")}</select></label>
+        <label>KĂ¶zterĂĽlet szĂˇma<input name="kozterulet_szama" value="${esc(row.kozterulet_szama || "")}"></label>
         <label>Emelet<input name="emelet" value="${esc(row.emelet || "")}"></label>
-        <label>Ajtószám<input name="ajtoszam" value="${esc(row.ajtoszam || "")}"></label>
-        <label>Cefre átvételi azonosító<input name="cefre_atveteli_azonosito" required value="${esc(row.cefre_atveteli_azonosito)}"></label>
-        <label>Főzés kezdete<input name="fozes_start" type="datetime-local" required value="${esc(row.fozes_start)}"></label>
-        <label>Főzés vége<input name="fozes_end" type="datetime-local" required value="${esc(row.fozes_end)}"></label>
-        <label>Kezdő óraállás<input name="kezdo" type="number" step="0.001" required value="${esc(row.kezdo)}"></label>
-        <label>Záró óraállás<input name="zaro" type="number" step="0.001" required value="${esc(row.zaro)}"></label>
-        <label>Szesz foka<input name="szesz_foka" type="number" step="0.1" required value="${esc(row.szesz_foka)}"></label>
-        <label>Mennyiség literben<input name="mennyiseg_literben" readonly value="${esc(row.mennyiseg_literben)}"></label>
+        <label>AjtĂłszĂˇm<input name="ajtoszam" value="${esc(row.ajtoszam || "")}"></label>
+        <label>Cefre ĂˇtvĂ©teli azonosĂ­tĂł<input name="cefre_atveteli_azonosito" value="${esc(row.cefre_atveteli_azonosito)}"></label>
+        <label>FĹ‘zĂ©s kezdete<input name="fozes_start" type="datetime-local" value="${esc(row.fozes_start)}"></label>
+        <label>FĹ‘zĂ©s vĂ©ge<input name="fozes_end" type="datetime-local" value="${esc(row.fozes_end)}"></label>
+        <label>KezdĹ‘ ĂłraĂˇllĂˇs<input name="kezdo" type="number" step="0.001" value="${esc(row.kezdo)}"></label>
+        <label>ZĂˇrĂł ĂłraĂˇllĂˇs<input name="zaro" type="number" step="0.001" value="${esc(row.zaro)}"></label>
+        <label>Szesz foka<input name="szesz_foka" type="number" step="0.1" value="${esc(row.szesz_foka)}"></label>
+        <label>MennyisĂ©g literben<input name="mennyiseg_literben" readonly value="${esc(row.mennyiseg_literben)}"></label>
         <label>Hektoliterfokban<input name="hektoliterfokban" readonly value="${esc(row.hektoliterfokban)}"></label>
-        <label>Kiadás dátuma<input name="kiadas_datuma" type="date" required value="${esc(row.kiadas_datuma)}"></label>
-        <label>Nyugtaérték<input name="nyugtaertek" readonly value="${esc(row.nyugtaertek)}"></label>
+        <label>KiadĂˇs dĂˇtuma<input name="kiadas_datuma" type="date" value="${esc(row.kiadas_datuma)}"></label>
+        <label>NyugtaĂ©rtĂ©k<input name="nyugtaertek" readonly value="${esc(row.nyugtaertek)}"></label>
         <div class="actions wide">
-          <button class="primary" type="submit">Módosítás mentése</button>
-          <button class="danger delete-entry" type="button">Bejegyzés törlése</button>
+          <button class="primary" type="submit">MĂłdosĂ­tĂˇs mentĂ©se</button>
+          <button class="danger delete-entry" type="button">BejegyzĂ©s tĂ¶rlĂ©se</button>
         </div>
       </form>
     </article>
@@ -277,7 +277,7 @@ function editFormHtml(row) {
 async function loadPersonRecords() {
   const name = personSelect.value;
   if (!name) {
-    entrySelect.innerHTML = `<option value="">Előbb válassz személyt</option>`;
+    entrySelect.innerHTML = `<option value="">ElĹ‘bb vĂˇlassz szemĂ©lyt</option>`;
     currentPersonRecords = [];
     editArea.innerHTML = "";
     return;
@@ -285,14 +285,14 @@ async function loadPersonRecords() {
   const { data } = await api(`/api/person?year=${selectedYear()}&nev=${encodeURIComponent(name)}`);
   currentPersonRecords = data.records;
   entrySelect.innerHTML = currentPersonRecords.length
-    ? `<option value="">Válassz bejegyzést</option>` +
+    ? `<option value="">VĂˇlassz bejegyzĂ©st</option>` +
       currentPersonRecords
         .map(
           (row) =>
             `<option value="${row.id}">${esc(row.fozes_start)} - ${formatNumber(row.mennyiseg_literben)} liter, ${formatHlf(row.hektoliterfokban)} hlf</option>`
         )
         .join("")
-    : `<option value="">Nincs bejegyzés</option>`;
+    : `<option value="">Nincs bejegyzĂ©s</option>`;
   editArea.innerHTML = "";
 }
 
@@ -341,15 +341,15 @@ async function saveEdit(form, force = false) {
     return;
   }
   await refreshAll();
-  showToast("Módosítás mentve.");
+  showToast("MĂłdosĂ­tĂˇs mentve.");
 }
 
 async function deleteEntry(id) {
-  const ok = window.confirm("Biztosan törlöd ezt a bejegyzést? Ezt nem lehet visszavonni.");
+  const ok = window.confirm("Biztosan tĂ¶rlĂ¶d ezt a bejegyzĂ©st? Ezt nem lehet visszavonni.");
   if (!ok) return;
   await api(`/api/records/${id}?year=${selectedYear()}`, { method: "DELETE" });
   await refreshAll();
-  showToast("Bejegyzés törölve.");
+  showToast("BejegyzĂ©s tĂ¶rĂ¶lve.");
 }
 
 async function refreshAll() {
@@ -380,3 +380,4 @@ wireCalculation(entryForm);
 wireAddressControls(entryForm);
 
 loadYears().then(refreshAll).catch((error) => showToast(error.message));
+
