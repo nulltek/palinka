@@ -174,9 +174,12 @@ def connect_year(year):
 
 
 def row_to_dict(row):
-    if isinstance(row, dict):
-        return dict(row)
-    return {key: row[key] for key in row.keys()}
+    data = dict(row) if isinstance(row, dict) else {key: row[key] for key in row.keys()}
+    for key in ["created_at", "updated_at"]:
+        value = data.get(key)
+        if hasattr(value, "isoformat"):
+            data[key] = value.isoformat(sep=" ", timespec="seconds")
+    return data
 
 
 def strip_accents(value):
