@@ -46,27 +46,10 @@
           <label>Azonosító szám<input name="azonosito_szam" /></label>
           <label>Adószám<input name="adoszam" /></label>
           <label>Irányítószám<input name="iranyitoszam" inputmode="numeric" /></label>
-          <label>Megye<select name="megye" class="county-select"></select></label>
+          <label>Megye<input name="megye" class="county-select" list="countyListNew" /><datalist id="countyListNew"></datalist></label>
           <label>Város<input name="varos" class="city-input" list="cityListNew" /><datalist id="cityListNew"></datalist></label>
           <label>Közterület neve<input name="kozterulet_neve" /></label>
-          <label>Közterület jellege
-            <select name="kozterulet_jellege">
-              <option value="">Válassz</option>
-              <option>utca</option>
-              <option>tér</option>
-              <option>körút</option>
-              <option>út</option>
-              <option>sugárút</option>
-              <option>köz</option>
-              <option>sor</option>
-              <option>park</option>
-              <option>lakótelep</option>
-              <option>dűlő</option>
-              <option>tanya</option>
-              <option>major</option>
-              <option>egyéb</option>
-            </select>
-          </label>
+          <label>Közterület jellege<input name="kozterulet_jellege" list="streetTypeListNew" /><datalist id="streetTypeListNew"></datalist></label>
           <label>Közterület száma<input name="kozterulet_szama" /></label>
           <label>Emelet<input name="emelet" /></label>
           <label>Ajtószám<input name="ajtoszam" /></label>
@@ -146,4 +129,3 @@
     <script src="/app.js"></script>
   </body>
 </html>
-

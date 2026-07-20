@@ -50,9 +50,9 @@ function streetTypeOptions(selected = "") {
     .join("");
 }
 
-function countyOptions(selected = "") {
-  return `<option value="">Válassz</option>` + Object.keys(locations)
-    .map((county) => `<option ${county === selected ? "selected" : ""}>${esc(county)}</option>`)
+function datalistOptions(values) {
+  return values
+    .map((value) => `<option value="${esc(value)}"></option>`)
     .join("");
 }
 
@@ -87,22 +87,26 @@ function fillCityListFromMatches(datalist, matches) {
 }
 
 function wireAddressControls(root) {
-  root.querySelectorAll(".county-select").forEach((select) => {
-    if (!select.innerHTML.trim()) {
-      select.innerHTML = countyOptions(select.dataset.selected || "");
-    }
-    const form = select.closest("form");
+  root.querySelectorAll("input[name='kozterulet_jellege'][list]").forEach((input) => {
+    const list = input.ownerDocument.getElementById(input.getAttribute("list"));
+    if (list) list.innerHTML = datalistOptions(streetTypes);
+  });
+
+  root.querySelectorAll(".county-select").forEach((countyInput) => {
+    const countyList = countyInput.ownerDocument.getElementById(countyInput.getAttribute("list"));
+    if (countyList) countyList.innerHTML = datalistOptions(Object.keys(locations));
+    const form = countyInput.closest("form");
     const cityInput = form.querySelector(".city-input");
-    const datalist = form.querySelector("datalist");
+    const datalist = cityInput.ownerDocument.getElementById(cityInput.getAttribute("list"));
     const zipInput = form.elements.iranyitoszam;
-    fillCityList(datalist, select.value);
-    select.addEventListener("change", () => {
+    fillCityList(datalist, countyInput.value);
+    countyInput.addEventListener("change", () => {
       cityInput.value = "";
       zipInput.value = "";
-      fillCityList(datalist, select.value);
+      fillCityList(datalist, countyInput.value);
     });
     cityInput.addEventListener("change", () => {
-      const city = citiesForCounty(select.value).find((item) => item.name === cityInput.value);
+      const city = citiesForCounty(countyInput.value).find((item) => item.name === cityInput.value);
       if (city && city.zips.length === 1) {
         zipInput.value = city.zips[0];
       }
@@ -115,7 +119,7 @@ function wireAddressControls(root) {
       const counties = [...new Set(matches.map((match) => match.county))];
       const cityNames = [...new Set(matches.map((match) => match.name))];
       if (counties.length === 1) {
-        select.value = counties[0];
+        countyInput.value = counties[0];
       }
       if (cityNames.length === 1) {
         cityInput.value = cityNames[0];
@@ -248,10 +252,10 @@ function editFormHtml(row) {
         <label>Azonosító szám<input name="azonosito_szam" value="${esc(row.azonosito_szam)}"></label>
         <label>Adószám<input name="adoszam" value="${esc(row.adoszam)}"></label>
         <label>Irányítószám<input name="iranyitoszam" inputmode="numeric" value="${esc(row.iranyitoszam || "")}"></label>
-        <label>Megye<select name="megye" class="county-select" data-selected="${esc(row.megye || "")}">${countyOptions(row.megye || "")}</select></label>
+        <label>Megye<input name="megye" class="county-select" list="countyListEdit${row.id}" value="${esc(row.megye || "")}"><datalist id="countyListEdit${row.id}"></datalist></label>
         <label>Város<input name="varos" class="city-input" list="cityListEdit${row.id}" value="${esc(row.varos || "")}"><datalist id="cityListEdit${row.id}"></datalist></label>
         <label>Közterület neve<input name="kozterulet_neve" value="${esc(row.kozterulet_neve || "")}"></label>
-        <label>Közterület jellege<select name="kozterulet_jellege">${streetTypeOptions(row.kozterulet_jellege || "")}</select></label>
+        <label>Közterület jellege<input name="kozterulet_jellege" list="streetTypeListEdit${row.id}" value="${esc(row.kozterulet_jellege || "")}"><datalist id="streetTypeListEdit${row.id}"></datalist></label>
         <label>Közterület száma<input name="kozterulet_szama" value="${esc(row.kozterulet_szama || "")}"></label>
         <label>Emelet<input name="emelet" value="${esc(row.emelet || "")}"></label>
         <label>Ajtószám<input name="ajtoszam" value="${esc(row.ajtoszam || "")}"></label>
@@ -380,4 +384,3 @@ wireCalculation(entryForm);
 wireAddressControls(entryForm);
 
 loadYears().then(refreshAll).catch((error) => showToast(error.message));
-
