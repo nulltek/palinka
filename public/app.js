@@ -155,20 +155,40 @@ function calculateInto(form) {
   const zaro = Number(form.elements.zaro.value || 0);
   const szesz = Number(form.elements.szesz_foka.value || 0);
   const liter = Math.max(0, zaro - kezdo);
-  const hlf = Math.round(((liter * szesz) / 100) * 10) / 10;
-  form.elements.mennyiseg_literben.value = liter ? liter.toFixed(3) : "";
-  form.elements.hektoliterfokban.value = hlf ? hlf.toFixed(1) : "";
+  const hlfSource = Number(form.elements.mennyiseg_literben.value || liter);
+  const hlf = Math.round(((hlfSource * szesz) / 100) * 10) / 10;
+  if (!form.elements.mennyiseg_literben.dataset.manual) {
+    form.elements.mennyiseg_literben.value = liter ? liter.toFixed(3) : "";
+  }
+  if (!form.elements.hektoliterfokban.dataset.manual) {
+    form.elements.hektoliterfokban.value = hlf ? hlf.toFixed(1) : "";
+  }
   form.elements.nyugtaertek.value = hlf ? Math.round(hlf * 1400) : "";
 }
 
 function payloadFromForm(form) {
-  calculateInto(form);
+  updateReceiptFromHlf(form);
   return Object.fromEntries(new FormData(form).entries());
+}
+
+function updateReceiptFromHlf(form) {
+  const hlf = Number(form.elements.hektoliterfokban.value || 0);
+  form.elements.nyugtaertek.value = hlf ? Math.round(hlf * 1400) : "";
 }
 
 function wireCalculation(form) {
   ["kezdo", "zaro", "szesz_foka"].forEach((name) => {
     form.elements[name].addEventListener("input", () => calculateInto(form));
+  });
+  form.elements.mennyiseg_literben.addEventListener("input", () => {
+    form.elements.mennyiseg_literben.dataset.manual = form.elements.mennyiseg_literben.value ? "1" : "";
+    if (!form.elements.hektoliterfokban.dataset.manual) {
+      calculateInto(form);
+    }
+  });
+  form.elements.hektoliterfokban.addEventListener("input", () => {
+    form.elements.hektoliterfokban.dataset.manual = form.elements.hektoliterfokban.value ? "1" : "";
+    updateReceiptFromHlf(form);
   });
 }
 
@@ -265,8 +285,8 @@ function editFormHtml(row) {
         <label>Kezdő óraállás<input name="kezdo" type="number" step="0.001" value="${esc(row.kezdo)}"></label>
         <label>Záró óraállás<input name="zaro" type="number" step="0.001" value="${esc(row.zaro)}"></label>
         <label>Szesz foka<input name="szesz_foka" type="number" step="0.1" value="${esc(row.szesz_foka)}"></label>
-        <label>Mennyiség literben<input name="mennyiseg_literben" readonly value="${esc(row.mennyiseg_literben)}"></label>
-        <label>Hektoliterfokban<input name="hektoliterfokban" readonly value="${esc(row.hektoliterfokban)}"></label>
+        <label>Mennyiség literben<input name="mennyiseg_literben" type="number" step="0.001" value="${esc(row.mennyiseg_literben)}"></label>
+        <label>Hektoliterfokban<input name="hektoliterfokban" type="number" step="0.1" value="${esc(row.hektoliterfokban)}"></label>
         <label>Kiadás dátuma<input name="kiadas_datuma" type="date" value="${esc(row.kiadas_datuma)}"></label>
         <label>Nyugtaérték<input name="nyugtaertek" readonly value="${esc(row.nyugtaertek)}"></label>
         <div class="actions wide">
@@ -379,7 +399,11 @@ entryForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   await saveNew();
 });
-entryForm.addEventListener("reset", () => setTimeout(() => calculateInto(entryForm), 0));
+entryForm.addEventListener("reset", () => {
+  delete entryForm.elements.mennyiseg_literben.dataset.manual;
+  delete entryForm.elements.hektoliterfokban.dataset.manual;
+  setTimeout(() => calculateInto(entryForm), 0);
+});
 wireCalculation(entryForm);
 wireAddressControls(entryForm);
 
