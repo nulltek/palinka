@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pálinka Ügyfél Nyilvántartó</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Pálinkafőzde adatbázis</p>
+          <h1>Ügyfelek és főzések</h1>
+        </div>
+        <div class="year-box">
+          <label for="yearSelect">Év</label>
+          <select id="yearSelect"></select>
+        </div>
+      </header>
+
+      <nav class="tabs" aria-label="Fő menü">
+        <button class="tab active" data-tab="new">Új adat felvitele</button>
+        <button class="tab" data-tab="view">Meglévő adatok</button>
+        <button class="tab" data-tab="edit">Szerkesztés</button>
+      </nav>
+
+      <section class="summary-grid">
+        <div class="summary-card">
+          <span>Összes hektoliterfok</span>
+          <strong id="totalHlf">0</strong>
+        </div>
+        <div class="summary-card">
+          <span>Összes nyugtaérték</span>
+          <strong id="totalReceipt">0 Ft</strong>
+        </div>
+      </section>
+
+      <section id="newPanel" class="panel active-panel">
+        <div class="panel-head">
+          <h2>Új adat felvitele</h2>
+          <p>A liter, hektoliterfok és nyugtaérték magától számolódik.</p>
+        </div>
+        <form id="entryForm" class="form-grid">
+          <label>Név<input name="nev" required autocomplete="name" /></label>
+          <label>Azonosító szám<input name="azonosito_szam" required /></label>
+          <label>Adószám<input name="adoszam" required /></label>
+          <label>Irányítószám<input name="iranyitoszam" required inputmode="numeric" /></label>
+          <label>Megye<select name="megye" class="county-select" required></select></label>
+          <label>Város<input name="varos" class="city-input" list="cityListNew" required /><datalist id="cityListNew"></datalist></label>
+          <label>Közterület neve<input name="kozterulet_neve" required /></label>
+          <label>Közterület jellege
+            <select name="kozterulet_jellege" required>
+              <option value="">Válassz</option>
+              <option>utca</option>
+              <option>tér</option>
+              <option>körút</option>
+              <option>út</option>
+              <option>sugárút</option>
+              <option>köz</option>
+              <option>sor</option>
+              <option>park</option>
+              <option>lakótelep</option>
+              <option>dűlő</option>
+              <option>tanya</option>
+              <option>major</option>
+              <option>egyéb</option>
+            </select>
+          </label>
+          <label>Közterület száma<input name="kozterulet_szama" required /></label>
+          <label>Emelet<input name="emelet" /></label>
+          <label>Ajtószám<input name="ajtoszam" /></label>
+          <label>Cefre átvételi azonosító<input name="cefre_atveteli_azonosito" required /></label>
+          <label>Főzés kezdete<input name="fozes_start" type="datetime-local" required /></label>
+          <label>Főzés vége<input name="fozes_end" type="datetime-local" required /></label>
+          <label>Kezdő óraállás<input name="kezdo" type="number" step="0.001" required /></label>
+          <label>Záró óraállás<input name="zaro" type="number" step="0.001" required /></label>
+          <label>Szesz foka<input name="szesz_foka" type="number" step="0.1" required /></label>
+          <label>Mennyiség literben<input name="mennyiseg_literben" readonly /></label>
+          <label>Hektoliterfokban<input name="hektoliterfokban" readonly /></label>
+          <label>Kiadás dátuma<input name="kiadas_datuma" type="date" required /></label>
+          <label>Nyugtaérték<input name="nyugtaertek" readonly /></label>
+          <div class="actions wide">
+            <button type="submit" class="primary">Mentés</button>
+            <button type="reset" class="secondary">Űrlap törlése</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="viewPanel" class="panel">
+        <div class="panel-head">
+          <h2>Meglévő adatok</h2>
+          <label class="order-box">Sorrend
+            <select id="orderSelect">
+              <option value="name">Név szerint</option>
+              <option value="azonosito">Azonosítószám szerint</option>
+              <option value="kiadas" selected>Kiadás dátuma szerint</option>
+            </select>
+          </label>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Név</th>
+                <th>Adószám</th>
+                <th>Lakcím</th>
+                <th>Típus</th>
+                <th>Főzés</th>
+                <th>Liter</th>
+                <th>Hlf</th>
+                <th>Nyugtaérték</th>
+              </tr>
+            </thead>
+            <tbody id="recordsBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="editPanel" class="panel">
+        <div class="panel-head">
+          <h2>Szerkesztés</h2>
+          <p>Válassz évet és személyt, majd javítsd a sort.</p>
+        </div>
+        <div class="edit-picker">
+          <label>Személy<select id="personSelect"></select></label>
+          <label>Bejegyzés<select id="entrySelect"></select></label>
+        </div>
+        <div id="editArea" class="edit-area"></div>
+      </section>
+    </main>
+
+    <dialog id="warningDialog">
+      <div class="dialog-card">
+        <h2>Figyelem</h2>
+        <div id="warningText"></div>
+        <div class="dialog-actions">
+          <button id="cancelWarning" class="secondary">Mégse</button>
+          <button id="confirmWarning" class="danger">Mentés így is</button>
+        </div>
+      </div>
+    </dialog>
+
+    <div id="toast" class="toast" role="status"></div>
+    <script src="/locations.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>

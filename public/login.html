@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Belépés</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="login-shell">
+      <form id="loginForm" class="login-card">
+        <p class="eyebrow">Pálinkafőzde adatbázis</p>
+        <h1>Belépés</h1>
+        <label>Jelszó<input name="password" type="password" inputmode="numeric" autofocus required /></label>
+        <button class="primary" type="submit">Belépés</button>
+        <p id="loginError" class="login-error"></p>
+      </form>
+    </main>
+    <script>
+      const form = document.querySelector("#loginForm");
+      const error = document.querySelector("#loginError");
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        error.textContent = "";
+        const password = form.elements.password.value;
+        const response = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password }),
+        });
+        if (response.ok) {
+          window.location.href = "/";
+          return;
+        }
+        error.textContent = "Rossz jelszó.";
+      });
+    </script>
+  </body>
+</html>

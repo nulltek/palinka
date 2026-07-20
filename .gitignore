@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.agents/
+work/
+outputs/
+data/*.db
+data/*.db-*
+skills-lock.json
+.env
