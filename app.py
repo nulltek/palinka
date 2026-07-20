@@ -207,14 +207,17 @@ def compute_values(payload):
     kezdo = parse_number(payload.get("kezdo"))
     zaro = parse_number(payload.get("zaro"))
     szesz = parse_number(payload.get("szesz_foka"))
-    if zaro < kezdo:
+    has_kezdo = str(payload.get("kezdo") or "").strip() != ""
+    has_zaro = str(payload.get("zaro") or "").strip() != ""
+    if has_kezdo and has_zaro and zaro < kezdo:
         raise ValueError("Záró óraállás cannot be smaller than kezdő óraállás.")
     if szesz < 0:
         raise ValueError("Szesz foka cannot be negative.")
 
     manual_liter = str(payload.get("mennyiseg_literben") or "").strip()
     manual_hektoliter = str(payload.get("hektoliterfokban") or "").strip()
-    liter = round(parse_number(manual_liter), 3) if manual_liter else round(zaro - kezdo, 3)
+    calculated_liter = zaro - kezdo if has_kezdo and has_zaro else 0
+    liter = round(parse_number(manual_liter), 3) if manual_liter else round(calculated_liter, 3)
     hektoliter = round(parse_number(manual_hektoliter), 1) if manual_hektoliter else round((liter * szesz) / 100, 1)
     nyugta = round(hektoliter * 1400, 0)
     data.update(
