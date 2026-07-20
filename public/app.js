@@ -90,15 +90,42 @@ function groupRecordsByPerson(records) {
 
 function cookingLine(row, index) {
   const period = [row.fozes_start, row.fozes_end].filter(Boolean).map(esc).join(" - ") || "Nincs főzési dátum";
-  const meter = `${formatNumber(row.kezdo)} / ${formatNumber(row.zaro)}`;
+  const fields = [
+    ["Azonosító szám", row.azonosito_szam],
+    ["Adószám", row.adoszam],
+    ["Állandó lakcím", row.allando_lakcim],
+    ["Irányítószám", row.iranyitoszam],
+    ["Megye", row.megye],
+    ["Város", row.varos],
+    ["Közterület neve", row.kozterulet_neve],
+    ["Közterület jellege", row.kozterulet_jellege],
+    ["Közterület száma", row.kozterulet_szama],
+    ["Emelet", row.emelet],
+    ["Ajtószám", row.ajtoszam],
+    ["Cefre átvételi azonosító", row.cefre_atveteli_azonosito],
+    ["Főzés dátuma", period],
+    ["Kiadás dátuma", row.kiadas_datuma],
+    ["Kezdő", formatNumber(row.kezdo)],
+    ["Záró", formatNumber(row.zaro)],
+    ["Szesz foka", formatNumber(row.szesz_foka)],
+    ["Mennyiség literben", formatNumber(row.mennyiseg_literben)],
+    ["Hektoliterfokban", formatHlf(row.hektoliterfokban)],
+    ["Nyugtaérték", formatMoney(row.nyugtaertek)],
+  ];
   return `
     <div class="entry-line">
-      <strong>${index + 1}.</strong>
-      <span>${period}</span>
-      <span>Kezdő/záró: ${meter}</span>
-      <span>Liter: ${formatNumber(row.mennyiseg_literben)}</span>
-      <span class="${row.hektoliterfokban >= 43 ? "high" : ""}">Hlf: ${formatHlf(row.hektoliterfokban)}</span>
-      <span>Nyugta: ${formatMoney(row.nyugtaertek)}</span>
+      <div class="entry-title">${index + 1}. bejegyzés</div>
+      <div class="entry-fields">
+        ${fields
+          .map(
+            ([label, value]) => `
+              <span class="${label === "Hektoliterfokban" && row.hektoliterfokban >= 43 ? "high" : ""}">
+                <b>${esc(label)}:</b> ${esc(value ?? "")}
+              </span>
+            `
+          )
+          .join("")}
+      </div>
     </div>
   `;
 }

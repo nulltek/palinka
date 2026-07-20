@@ -250,19 +250,37 @@ th {
 
 .entry-stack {
   display: grid;
-  gap: 8px;
-  min-width: 520px;
+  gap: 10px;
+  min-width: 760px;
 }
 
 .entry-line {
   display: grid;
-  grid-template-columns: 34px minmax(150px, 1.4fr) minmax(120px, 1fr) minmax(90px, 0.8fr) minmax(90px, 0.8fr) minmax(120px, 1fr);
-  gap: 10px;
-  align-items: center;
-  padding: 9px 10px;
+  gap: 8px;
+  padding: 11px 12px;
   border: 1px solid #eadfce;
   border-radius: 6px;
   background: #fffaf2;
+}
+
+.entry-title {
+  font-weight: 900;
+  color: #31271e;
+}
+
+.entry-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+}
+
+.entry-fields span {
+  min-width: 170px;
+  line-height: 1.35;
+}
+
+.entry-fields b {
+  color: #6f5a44;
 }
 
 .high {
